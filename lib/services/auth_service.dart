@@ -3,6 +3,20 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../models/app_user.dart';
 
+class StaffWithStore {
+  final AppUser user;
+  final String storeId;
+  final String storeName;
+  final String cctRole;
+
+  const StaffWithStore({
+    required this.user,
+    required this.storeId,
+    required this.storeName,
+    required this.cctRole,
+  });
+}
+
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -151,7 +165,6 @@ class AuthService {
       }
     }
 
-    // If still staff and running on web, or email matches, default to owner if needed
     return AppUser(
       uid: uid,
       name: userData['name'] as String? ?? (fbUser?.displayName ?? 'Người dùng'),
@@ -163,82 +176,88 @@ class AuthService {
     );
   }
 
-  // Create staff account for KMT (used by owner)
-  Future<void> createStaffAccount({
-    required String email,
-    required String password,
-    required String name,
-    required String storeId,
-  }) async {
-    final credential = await _auth.createUserWithEmailAndPassword(
-      email: email.trim(),
-      password: password,
-    );
-    
-    final newUid = credential.user!.uid;
-    
-    // Create user document
-    await _firestore.collection('users').doc(newUid).set({
-      'id': newUid,
-      'name': name.trim(),
-      'email': email.trim(),
-      'currentStoreId': storeId,
-      'storeIds': [storeId],
-      'createdAt': DateTime.now().toIso8601String(),
-    });
-
-    // Create member document with employee role
-    await _firestore
-        .collection('stores')
-        .doc(storeId)
-        .collection('members')
-        .doc(newUid)
-        .set({
-      'userId': newUid,
-      'name': name.trim(),
-      'role': 'employee',
-      'status': 'active',
-      'employeeType': 'fulltime',
-      'baseMonthlySalary': 0,
-      'baseHourlyRate': 0,
-      'standardHoursPerMonth': 208,
-      'joinedAt': DateTime.now(),
-    });
-
-    await _auth.signOut();
-  }
-
-  // Get all staff members for the current store
-  Future<List<AppUser>> getStaffMembers(String storeId) async {
+  // Get all staff members across ALL stores or filtered by a specific store
+  Future<List<StaffWithStore>> getAllStaffMembers({String? storeIdFilter}) async {
     try {
-      final membersSnapshot = await _firestore
-          .collection('stores')
-          .doc(storeId)
-          .collection('members')
-          .where('status', isEqualTo: 'active')
-          .get();
+      // 1. Fetch all store documents from CCT /stores collection
+      final storesSnapshot = await _firestore.collection('stores').get();
+      final storeMap = <String, String>{}; // storeId -> storeName
 
-      final staffList = <AppUser>[];
-      for (final doc in membersSnapshot.docs) {
+      for (final doc in storesSnapshot.docs) {
         final data = doc.data();
-        final cctRole = data['role'] as String? ?? 'employee';
-        if (cctRole == 'owner') continue;
-        
-        staffList.add(AppUser(
-          uid: doc.id,
-          name: data['name'] as String? ?? '',
-          email: '',
-          phone: data['phone'] as String?,
-          avatarUrl: data['avatarUrl'] as String?,
-          role: KmtRole.staff,
-          currentStoreId: storeId,
-        ));
+        storeMap[doc.id] = data['name'] as String? ?? doc.id;
       }
-      return staffList;
+
+      // If CCT /stores query was empty or offline, fallback to standard Trạm stores
+      if (storeMap.isEmpty) {
+        storeMap['tram_chanh'] = 'Trạm Chanh';
+        storeMap['tram_sua'] = 'Trạm Sữa';
+      }
+
+      final results = <StaffWithStore>[];
+      final targetStoreIds = (storeIdFilter != null && storeIdFilter != 'all')
+          ? [storeIdFilter]
+          : storeMap.keys.toList();
+
+      for (final storeId in targetStoreIds) {
+        final storeName = storeMap[storeId] ?? storeId;
+        try {
+          final membersSnapshot = await _firestore
+              .collection('stores')
+              .doc(storeId)
+              .collection('members')
+              .where('status', isEqualTo: 'active')
+              .get();
+
+          for (final doc in membersSnapshot.docs) {
+            final data = doc.data();
+            final cctRole = data['role'] as String? ?? 'employee';
+            if (cctRole == 'owner') continue;
+
+            results.add(StaffWithStore(
+              user: AppUser(
+                uid: doc.id,
+                name: data['name'] as String? ?? '',
+                email: '',
+                phone: data['phone'] as String?,
+                avatarUrl: data['avatarUrl'] as String?,
+                role: KmtRole.staff,
+                currentStoreId: storeId,
+              ),
+              storeId: storeId,
+              storeName: storeName,
+              cctRole: cctRole,
+            ));
+          }
+        } catch (e) {
+          debugPrint('Error getting members for store $storeId: $e');
+        }
+      }
+
+      // Sort alphabetically by staff name
+      results.sort((a, b) => a.user.name.compareTo(b.user.name));
+      return results;
     } catch (e) {
-      debugPrint('Error getStaffMembers: $e');
+      debugPrint('Error getAllStaffMembers: $e');
       return [];
     }
+  }
+
+  // Get list of available CCT stores
+  Future<Map<String, String>> getAvailableStores() async {
+    try {
+      final storesSnapshot = await _firestore.collection('stores').get();
+      final storeMap = <String, String>{};
+      for (final doc in storesSnapshot.docs) {
+        final data = doc.data();
+        storeMap[doc.id] = data['name'] as String? ?? doc.id;
+      }
+      if (storeMap.isNotEmpty) return storeMap;
+    } catch (_) {}
+    return {
+      'tram_chanh': 'Trạm Chanh',
+      'tram_sua': 'Trạm Sữa',
+    };
   }
 
   static String parseAuthError(FirebaseAuthException e) {
