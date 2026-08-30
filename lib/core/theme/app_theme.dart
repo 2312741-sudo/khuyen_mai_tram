@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
 
 class AppTheme {
   AppTheme._();
+
+  static const String fontFamily = 'Be Vietnam Pro';
 
   static ThemeData get tramTheme {
     final colorScheme = ColorScheme.fromSeed(
@@ -18,37 +19,37 @@ class AppTheme {
       onSurface: AppColors.neutral,
     );
 
-    final baseTextTheme = GoogleFonts.beVietnamProTextTheme();
+    const textTheme = TextTheme(
+      displayLarge: TextStyle(fontFamily: fontFamily, fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+      displayMedium: TextStyle(fontFamily: fontFamily, fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+      displaySmall: TextStyle(fontFamily: fontFamily, fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+      headlineLarge: TextStyle(fontFamily: fontFamily, fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+      headlineMedium: TextStyle(fontFamily: fontFamily, fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+      headlineSmall: TextStyle(fontFamily: fontFamily, fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+      titleLarge: TextStyle(fontFamily: fontFamily, fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+      titleMedium: TextStyle(fontFamily: fontFamily, fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary),
+      titleSmall: TextStyle(fontFamily: fontFamily, fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
+      bodyLarge: TextStyle(fontFamily: fontFamily, fontSize: 15, fontWeight: FontWeight.w400, color: AppColors.textPrimary),
+      bodyMedium: TextStyle(fontFamily: fontFamily, fontSize: 14, fontWeight: FontWeight.w400, color: AppColors.textPrimary),
+      bodySmall: TextStyle(fontFamily: fontFamily, fontSize: 12, fontWeight: FontWeight.w400, color: AppColors.textSecondary),
+      labelLarge: TextStyle(fontFamily: fontFamily, fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.white),
+      labelMedium: TextStyle(fontFamily: fontFamily, fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
+      labelSmall: TextStyle(fontFamily: fontFamily, fontSize: 11, fontWeight: FontWeight.w400, color: AppColors.textDisabled),
+    );
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-      fontFamily: GoogleFonts.beVietnamPro().fontFamily,
-      textTheme: baseTextTheme.copyWith(
-        displayLarge: baseTextTheme.displayLarge?.copyWith(fontWeight: FontWeight.w800, color: AppColors.textPrimary),
-        displayMedium: baseTextTheme.displayMedium?.copyWith(fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-        displaySmall: baseTextTheme.displaySmall?.copyWith(fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-        headlineLarge: baseTextTheme.headlineLarge?.copyWith(fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-        headlineMedium: baseTextTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-        headlineSmall: baseTextTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-        titleLarge: baseTextTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-        titleMedium: baseTextTheme.titleMedium?.copyWith(fontWeight: FontWeight.w500, color: AppColors.textPrimary),
-        titleSmall: baseTextTheme.titleSmall?.copyWith(fontWeight: FontWeight.w500, color: AppColors.textSecondary),
-        bodyLarge: baseTextTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w400, color: AppColors.textPrimary),
-        bodyMedium: baseTextTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w400, color: AppColors.textPrimary),
-        bodySmall: baseTextTheme.bodySmall?.copyWith(fontWeight: FontWeight.w400, color: AppColors.textSecondary),
-        labelLarge: baseTextTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600, color: AppColors.white),
-        labelMedium: baseTextTheme.labelMedium?.copyWith(fontWeight: FontWeight.w500, color: AppColors.textSecondary),
-        labelSmall: baseTextTheme.labelSmall?.copyWith(fontWeight: FontWeight.w400, color: AppColors.textDisabled),
-      ),
-      appBarTheme: AppBarTheme(
+      fontFamily: fontFamily,
+      textTheme: textTheme,
+      appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.white,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.beVietnamPro(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.white),
-        iconTheme: const IconThemeData(color: AppColors.white),
-        actionsIconTheme: const IconThemeData(color: AppColors.white),
+        titleTextStyle: TextStyle(fontFamily: fontFamily, fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.white),
+        iconTheme: IconThemeData(color: AppColors.white),
+        actionsIconTheme: IconThemeData(color: AppColors.white),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -57,10 +58,10 @@ class AppTheme {
           disabledBackgroundColor: AppColors.textDisabled,
           disabledForegroundColor: AppColors.white,
           elevation: 2,
-          shadowColor: AppColors.primary.withOpacity(0.4),
+          shadowColor: AppColors.primary.withValues(alpha: 0.4),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-          textStyle: GoogleFonts.beVietnamPro(fontSize: 16, fontWeight: FontWeight.w600),
+          textStyle: const TextStyle(fontFamily: fontFamily, fontSize: 16, fontWeight: FontWeight.w600),
           minimumSize: const Size(double.infinity, 52),
         ),
       ),
@@ -70,14 +71,14 @@ class AppTheme {
           side: const BorderSide(color: AppColors.primary, width: 1.5),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-          textStyle: GoogleFonts.beVietnamPro(fontSize: 16, fontWeight: FontWeight.w600),
+          textStyle: const TextStyle(fontFamily: fontFamily, fontSize: 16, fontWeight: FontWeight.w600),
           minimumSize: const Size(double.infinity, 52),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle: GoogleFonts.beVietnamPro(fontSize: 14, fontWeight: FontWeight.w600),
+          textStyle: const TextStyle(fontFamily: fontFamily, fontSize: 14, fontWeight: FontWeight.w600),
         ),
       ),
       cardTheme: CardThemeData(
@@ -87,41 +88,41 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 0),
       ),
-      inputDecorationTheme: InputDecorationTheme(
+      inputDecorationTheme: const InputDecorationTheme(
         filled: true,
         fillColor: AppColors.white,
-        hintStyle: GoogleFonts.beVietnamPro(color: AppColors.textDisabled, fontSize: 14, fontWeight: FontWeight.w400),
-        labelStyle: GoogleFonts.beVietnamPro(color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w500),
-        floatingLabelStyle: GoogleFonts.beVietnamPro(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border, width: 1.5)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border, width: 1.5)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
-        errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.danger, width: 1.5)),
-        focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.danger, width: 2)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        hintStyle: TextStyle(fontFamily: fontFamily, color: AppColors.textDisabled, fontSize: 14, fontWeight: FontWeight.w400),
+        labelStyle: TextStyle(fontFamily: fontFamily, color: AppColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w500),
+        floatingLabelStyle: TextStyle(fontFamily: fontFamily, color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600),
+        border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide(color: AppColors.border, width: 1.5)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide(color: AppColors.border, width: 1.5)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide(color: AppColors.primary, width: 2)),
+        errorBorder: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide(color: AppColors.danger, width: 1.5)),
+        focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)), borderSide: BorderSide(color: AppColors.danger, width: 2)),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         prefixIconColor: AppColors.textSecondary,
         suffixIconColor: AppColors.textSecondary,
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.surface,
         selectedColor: AppColors.primary,
-        labelStyle: GoogleFonts.beVietnamPro(fontSize: 12, fontWeight: FontWeight.w500),
+        labelStyle: const TextStyle(fontFamily: fontFamily, fontSize: 12, fontWeight: FontWeight.w500),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       ),
       dividerTheme: const DividerThemeData(color: AppColors.divider, thickness: 1, space: 0),
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.white,
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.textDisabled,
-        selectedLabelStyle: GoogleFonts.beVietnamPro(fontSize: 11, fontWeight: FontWeight.w600),
-        unselectedLabelStyle: GoogleFonts.beVietnamPro(fontSize: 11, fontWeight: FontWeight.w400),
+        selectedLabelStyle: TextStyle(fontFamily: fontFamily, fontSize: 11, fontWeight: FontWeight.w600),
+        unselectedLabelStyle: TextStyle(fontFamily: fontFamily, fontSize: 11, fontWeight: FontWeight.w400),
         type: BottomNavigationBarType.fixed,
         elevation: 8,
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.neutral,
-        contentTextStyle: GoogleFonts.beVietnamPro(color: AppColors.white, fontSize: 14, fontWeight: FontWeight.w400),
+        contentTextStyle: const TextStyle(fontFamily: fontFamily, color: AppColors.white, fontSize: 14, fontWeight: FontWeight.w400),
         actionTextColor: AppColors.accent,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -135,13 +136,13 @@ class AppTheme {
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        titleTextStyle: GoogleFonts.beVietnamPro(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-        contentTextStyle: GoogleFonts.beVietnamPro(fontSize: 14, fontWeight: FontWeight.w400, color: AppColors.textSecondary),
+        titleTextStyle: const TextStyle(fontFamily: fontFamily, fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+        contentTextStyle: const TextStyle(fontFamily: fontFamily, fontSize: 14, fontWeight: FontWeight.w400, color: AppColors.textSecondary),
       ),
-      listTileTheme: ListTileThemeData(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        titleTextStyle: GoogleFonts.beVietnamPro(fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.textPrimary),
-        subtitleTextStyle: GoogleFonts.beVietnamPro(fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.textSecondary),
+      listTileTheme: const ListTileThemeData(
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        titleTextStyle: TextStyle(fontFamily: fontFamily, fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.textPrimary),
+        subtitleTextStyle: TextStyle(fontFamily: fontFamily, fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.textSecondary),
       ),
     );
   }
