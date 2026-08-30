@@ -75,6 +75,14 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
     }
   }
 
+  Color _getStoreColor(String storeName) {
+    final lower = storeName.toLowerCase();
+    if (lower.contains('chanh')) return const Color(0xFFD48806);
+    if (lower.contains('sữa') || lower.contains('sua')) return const Color(0xFF1890FF);
+    if (lower.contains('kho')) return const Color(0xFF722ED1);
+    return const Color(0xFF52C41A);
+  }
+
   @override
   Widget build(BuildContext context) {
     final filteredStaff = _staffList.where((item) {
@@ -102,7 +110,7 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
                   children: [
                     Text('Danh sách nhân viên', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700)),
                     const SizedBox(height: 4),
-                    Text('Tự động gộp nhân sự giữa Trạm Chanh và Trạm Sữa', style: Theme.of(context).textTheme.bodySmall),
+                    Text('Tự động gộp nhân viên làm việc ở nhiều cửa hàng thành 1 dòng', style: Theme.of(context).textTheme.bodySmall),
                   ],
                 ),
                 IconButton(
@@ -184,7 +192,7 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
                             separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.divider),
                             itemBuilder: (_, index) {
                               final item = filteredStaff[index];
-                              final isManager = item.cctRole.contains('manager');
+                              final isManager = item.cctRole.toLowerCase().contains('manager');
 
                               return ListTile(
                                 leading: CircleAvatar(
@@ -209,32 +217,22 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
                                   spacing: 6,
                                   runSpacing: 4,
                                   children: [
-                                    // Store tags (Combined if working at both stores)
-                                    ...item.storeNames.map((storeName) => Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: storeName.toLowerCase().contains('chanh')
-                                            ? AppColors.accent.withValues(alpha: 0.15)
-                                            : AppColors.info.withValues(alpha: 0.15),
-                                        borderRadius: BorderRadius.circular(4),
-                                        border: Border.all(
-                                          color: storeName.toLowerCase().contains('chanh')
-                                              ? AppColors.accent
-                                              : AppColors.info,
-                                          width: 0.8,
+                                    // Store tags (Combined across all stores!)
+                                    ...item.storeNames.map((storeName) {
+                                      final color = _getStoreColor(storeName);
+                                      return Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: color.withValues(alpha: 0.12),
+                                          borderRadius: BorderRadius.circular(4),
+                                          border: Border.all(color: color.withValues(alpha: 0.6), width: 0.8),
                                         ),
-                                      ),
-                                      child: Text(
-                                        storeName,
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                          color: storeName.toLowerCase().contains('chanh')
-                                              ? const Color(0xFFB8860B)
-                                              : AppColors.info,
+                                        child: Text(
+                                          storeName,
+                                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color),
                                         ),
-                                      ),
-                                    )),
+                                      );
+                                    }),
                                     const SizedBox(width: 4),
                                     Text(
                                       isManager ? 'Quản lý' : 'Nhân viên',

@@ -187,30 +187,17 @@ class AuthService {
     );
   }
 
-  // Filter helper: ONLY Trạm Chanh and Trạm Sữa
-  static bool isOfficialStore(String name, String id) {
-    final lowerName = name.toLowerCase().trim();
-    final lowerId = id.toLowerCase().trim();
-    final isChanh = lowerName.contains('chanh') || lowerId.contains('chanh');
-    final isSua = lowerName.contains('sữa') || lowerName.contains('sua') || lowerId.contains('sua');
-    final isTestOrKho = lowerName.contains('test') || lowerName.contains('kho') || lowerId.contains('test') || lowerId.contains('kho');
-    return (isChanh || isSua) && !isTestOrKho;
-  }
-
-  // Get official stores (Only Trạm Chanh & Trạm Sữa)
+  // Get all available stores in CCT
   Future<Map<String, String>> getAvailableStores() async {
     final storeMap = <String, String>{};
     try {
       final storesSnapshot = await _firestore.collection('stores').get();
       for (final doc in storesSnapshot.docs) {
         final name = doc.data()['name'] as String? ?? doc.id;
-        if (isOfficialStore(name, doc.id)) {
-          storeMap[doc.id] = name;
-        }
+        storeMap[doc.id] = name.trim();
       }
     } catch (_) {}
 
-    // Fallback standard stores if none found
     if (storeMap.isEmpty) {
       storeMap['tram_chanh'] = 'TRẠM CHANH';
       storeMap['tram_sua'] = 'TRẠM SỮA';
@@ -218,7 +205,25 @@ class AuthService {
     return storeMap;
   }
 
-  // Get staff with automatic deduplication (1 row per employee, combined store tags)
+  // Generate robust unique deduplication key
+  static String generateDedupeKey(Map<String, dynamic> data, String docId) {
+    final userId = (data['userId'] as String? ?? data['id'] as String? ?? '').trim();
+    final rawPhone = (data['phone'] as String? ?? '').replaceAll(RegExp(r'[^0-9]'), '').trim();
+    final name = (data['name'] as String? ?? '').trim().toLowerCase();
+
+    // 1. Prioritize Phone number if available (most reliable unique identifier)
+    if (rawPhone.length >= 9) return 'phone_$rawPhone';
+
+    // 2. Then User ID if valid
+    if (userId.isNotEmpty && userId.length > 5) return 'uid_$userId';
+
+    // 3. Then Normalized Name
+    if (name.isNotEmpty) return 'name_$name';
+
+    return 'doc_$docId';
+  }
+
+  // Get staff with full deduplication across ALL stores
   Future<List<StaffWithStore>> getAllStaffMembers({String? storeIdFilter}) async {
     try {
       final storeMap = await getAvailableStores();
@@ -226,7 +231,6 @@ class AuthService {
           ? [storeIdFilter]
           : storeMap.keys.toList();
 
-      // Deduplication map: key = normalized user name or uid -> StaffWithStore
       final staffMap = <String, StaffWithStore>{};
 
       for (final storeId in targetStoreIds) {
@@ -244,35 +248,38 @@ class AuthService {
             final cctRole = data['role'] as String? ?? 'employee';
             if (cctRole == 'owner') continue;
 
-            final uid = doc.id;
             final name = (data['name'] as String? ?? '').trim();
             final phone = data['phone'] as String?;
             final avatarUrl = data['avatarUrl'] as String?;
+            final userId = (data['userId'] as String? ?? doc.id).trim();
 
-            // Unique key by UID or normalized Name + Phone
-            final dedupeKey = uid.isNotEmpty ? uid : '${name.toLowerCase()}_${phone ?? ''}';
+            final dedupeKey = generateDedupeKey(data, doc.id);
 
             if (staffMap.containsKey(dedupeKey)) {
-              // Employee exists in both stores -> Merge store names into 1 record!
+              // Merge with existing record
               final existing = staffMap[dedupeKey]!;
               final updatedStores = List<String>.from(existing.storeNames);
               if (!updatedStores.contains(storeName)) {
                 updatedStores.add(storeName);
               }
-              // Keep manager role if higher
-              final updatedRole = (existing.cctRole.contains('manager') || cctRole.contains('manager'))
-                  ? 'manager'
-                  : existing.cctRole;
+
+              final isExistingManager = existing.cctRole.toLowerCase().contains('manager');
+              final isNewManager = cctRole.toLowerCase().contains('manager');
+              final bestRole = (isExistingManager || isNewManager) ? 'manager' : existing.cctRole;
 
               staffMap[dedupeKey] = existing.copyWith(
                 storeNames: updatedStores,
-                cctRole: updatedRole,
+                cctRole: bestRole,
+                user: existing.user.copyWith(
+                  phone: existing.user.phone ?? phone,
+                  avatarUrl: existing.user.avatarUrl ?? avatarUrl,
+                ),
               );
             } else {
-              // New employee record
+              // Add new employee
               staffMap[dedupeKey] = StaffWithStore(
                 user: AppUser(
-                  uid: uid,
+                  uid: userId,
                   name: name,
                   email: '',
                   phone: phone,
