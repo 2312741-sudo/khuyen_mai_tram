@@ -1,11 +1,11 @@
 {
-    "name": "khuyen_mai_tram",
-    "short_name": "khuyen_mai_tram",
+    "name": "Khuyến Mãi Trạm",
+    "short_name": "Khuyến Mãi",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#CB2D2E",
+    "theme_color": "#CB2D2E",
+    "description": "Ứng dụng quản lý khuyến mãi và tích điểm khách hàng - Hệ sinh thái Trạm",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
