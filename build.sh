@@ -18,6 +18,6 @@ echo ">>> Tải dependencies..."
 flutter pub get
 
 echo ">>> Đang biên dịch Flutter Web..."
-flutter build web --release
+flutter build web --release --no-wasm-dry-run --no-tree-shake-icons
 
 echo "=== Biên dịch thành công! ==="
