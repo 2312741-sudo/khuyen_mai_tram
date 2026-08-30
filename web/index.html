@@ -5,11 +5,14 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Khuyến Mãi Trạm - Quản lý tích điểm và khách hàng">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Khuyến Mãi Trạm - Quản lý tích điểm và khách hàng hệ sinh thái Trạm">
 
-  <!-- Google Fonts: Be Vietnam Pro -->
+  <!-- Preconnect to CDNs for speed -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com">
+  <link rel="preconnect" href="https://identitytoolkit.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- iOS meta tags & icons -->
@@ -23,8 +26,78 @@
 
   <title>Khuyến Mãi Trạm</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #CB2D2E;
+      font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow: hidden;
+    }
+    #loading-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: #CB2D2E;
+      color: #ffffff;
+      z-index: 999999;
+      transition: opacity 0.4s ease-out;
+    }
+    .logo-box {
+      width: 84px;
+      height: 84px;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      margin-bottom: 20px;
+    }
+    .logo-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .app-title {
+      font-size: 24px;
+      font-weight: 800;
+      margin: 0 0 6px 0;
+      letter-spacing: 0.5px;
+    }
+    .app-subtitle {
+      font-size: 13px;
+      opacity: 0.85;
+      margin: 0 0 32px 0;
+    }
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
+  <!-- Instant Native Brand Loader -->
+  <div id="loading-container">
+    <div class="logo-box">
+      <img src="favicon.png" alt="Logo Trạm">
+    </div>
+    <div class="app-title">Khuyến Mãi Trạm</div>
+    <div class="app-subtitle">Hệ sinh thái Trạm</div>
+    <div class="spinner"></div>
+  </div>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
