@@ -49,9 +49,30 @@ class AppUser extends Equatable {
   bool get isOwner => role.isOwner;
   bool get isStaff => role.isStaff;
 
+  AppUser copyWith({
+    String? uid,
+    String? name,
+    String? email,
+    String? phone,
+    String? avatarUrl,
+    KmtRole? role,
+    String? currentStoreId,
+  }) {
+    return AppUser(
+      uid: uid ?? this.uid,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      role: role ?? this.role,
+      currentStoreId: currentStoreId ?? this.currentStoreId,
+    );
+  }
+
   @override
   List<Object?> get props => [uid, name, email, phone, avatarUrl, role, currentStoreId];
 
   @override
   String toString() => 'AppUser(uid: $uid, name: $name, role: ${role.label})';
 }
+

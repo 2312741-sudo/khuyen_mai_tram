@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:excel/excel.dart';
 import 'package:flutter/foundation.dart';
@@ -99,7 +98,7 @@ class ExcelExportService {
       final fileName = 'Danh_sach_khach_hang_Tram_${DateFormat('ddMMyyyy_HHmm').format(DateTime.now())}.xlsx';
       final blob = html.Blob([uint8list], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       final url = html.Url.createObjectUrlFromBlob(blob);
-      final anchor = html.AnchorElement(href: url)
+      html.AnchorElement(href: url)
         ..setAttribute('download', fileName)
         ..click();
       html.Url.revokeObjectUrl(url);
