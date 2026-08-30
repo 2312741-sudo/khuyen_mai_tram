@@ -80,9 +80,10 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
     final filteredStaff = _staffList.where((item) {
       if (_searchQuery.trim().isEmpty) return true;
       final q = _searchQuery.toLowerCase();
+      final inStores = item.storeNames.any((s) => s.toLowerCase().contains(q));
       return item.user.name.toLowerCase().contains(q) ||
           (item.user.phone?.contains(q) ?? false) ||
-          item.storeName.toLowerCase().contains(q);
+          inStores;
     }).toList();
 
     return Scaffold(
@@ -101,7 +102,7 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
                   children: [
                     Text('Danh sách nhân viên', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700)),
                     const SizedBox(height: 4),
-                    Text('Đồng bộ danh sách nhân viên và quản lý từ Chấm Công Trạm', style: Theme.of(context).textTheme.bodySmall),
+                    Text('Tự động gộp nhân sự giữa Trạm Chanh và Trạm Sữa', style: Theme.of(context).textTheme.bodySmall),
                   ],
                 ),
                 IconButton(
@@ -161,7 +162,7 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
             ),
             const SizedBox(height: 20),
 
-            // Staff List
+            // Staff List with Deduplication
             Expanded(
               child: _isLoading
                   ? const ShimmerListCard()
@@ -203,29 +204,44 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
                                   item.user.name,
                                   style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
                                 ),
-                                subtitle: Row(
+                                subtitle: Wrap(
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  spacing: 6,
+                                  runSpacing: 4,
                                   children: [
-                                    Container(
+                                    // Store tags (Combined if working at both stores)
+                                    ...item.storeNames.map((storeName) => Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: AppColors.surface,
+                                        color: storeName.toLowerCase().contains('chanh')
+                                            ? AppColors.accent.withValues(alpha: 0.15)
+                                            : AppColors.info.withValues(alpha: 0.15),
                                         borderRadius: BorderRadius.circular(4),
-                                        border: Border.all(color: AppColors.border),
+                                        border: Border.all(
+                                          color: storeName.toLowerCase().contains('chanh')
+                                              ? AppColors.accent
+                                              : AppColors.info,
+                                          width: 0.8,
+                                        ),
                                       ),
                                       child: Text(
-                                        item.storeName,
-                                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                                        storeName,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: storeName.toLowerCase().contains('chanh')
+                                              ? const Color(0xFFB8860B)
+                                              : AppColors.info,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 8),
+                                    )),
+                                    const SizedBox(width: 4),
                                     Text(
                                       isManager ? 'Quản lý' : 'Nhân viên',
                                       style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                                     ),
-                                    if (item.user.phone != null && item.user.phone!.isNotEmpty) ...[
-                                      const SizedBox(width: 8),
+                                    if (item.user.phone != null && item.user.phone!.isNotEmpty)
                                       Text('• ${item.user.phone}', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                                    ],
                                   ],
                                 ),
                                 trailing: Container(

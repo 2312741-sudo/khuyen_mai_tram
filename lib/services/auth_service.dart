@@ -6,15 +6,29 @@ import '../models/app_user.dart';
 class StaffWithStore {
   final AppUser user;
   final String storeId;
-  final String storeName;
+  final List<String> storeNames;
   final String cctRole;
 
   const StaffWithStore({
     required this.user,
     required this.storeId,
-    required this.storeName,
+    required this.storeNames,
     required this.cctRole,
   });
+
+  StaffWithStore copyWith({
+    AppUser? user,
+    String? storeId,
+    List<String>? storeNames,
+    String? cctRole,
+  }) {
+    return StaffWithStore(
+      user: user ?? this.user,
+      storeId: storeId ?? this.storeId,
+      storeNames: storeNames ?? this.storeNames,
+      cctRole: cctRole ?? this.cctRole,
+    );
+  }
 }
 
 class AuthService {
@@ -112,7 +126,6 @@ class AuthService {
     KmtRole role = KmtRole.staff;
 
     try {
-      // 1. Get user document from CCT users collection
       final userDoc = await _firestore
           .collection('users')
           .doc(uid)
@@ -127,7 +140,6 @@ class AuthService {
       debugPrint('User doc fetch notice: $e');
     }
 
-    // 2. Check if user is owner of any store in CCT stores collection
     try {
       final ownedStores = await _firestore
           .collection('stores')
@@ -144,7 +156,6 @@ class AuthService {
       debugPrint('Owner store check notice: $e');
     }
 
-    // 3. If not confirmed owner, check member role in stores/{currentStoreId}/members/{uid}
     if (role != KmtRole.owner && currentStoreId != null && currentStoreId.isNotEmpty) {
       try {
         final memberDoc = await _firestore
@@ -176,28 +187,47 @@ class AuthService {
     );
   }
 
-  // Get all staff members across ALL stores or filtered by a specific store
+  // Filter helper: ONLY Trạm Chanh and Trạm Sữa
+  static bool isOfficialStore(String name, String id) {
+    final lowerName = name.toLowerCase().trim();
+    final lowerId = id.toLowerCase().trim();
+    final isChanh = lowerName.contains('chanh') || lowerId.contains('chanh');
+    final isSua = lowerName.contains('sữa') || lowerName.contains('sua') || lowerId.contains('sua');
+    final isTestOrKho = lowerName.contains('test') || lowerName.contains('kho') || lowerId.contains('test') || lowerId.contains('kho');
+    return (isChanh || isSua) && !isTestOrKho;
+  }
+
+  // Get official stores (Only Trạm Chanh & Trạm Sữa)
+  Future<Map<String, String>> getAvailableStores() async {
+    final storeMap = <String, String>{};
+    try {
+      final storesSnapshot = await _firestore.collection('stores').get();
+      for (final doc in storesSnapshot.docs) {
+        final name = doc.data()['name'] as String? ?? doc.id;
+        if (isOfficialStore(name, doc.id)) {
+          storeMap[doc.id] = name;
+        }
+      }
+    } catch (_) {}
+
+    // Fallback standard stores if none found
+    if (storeMap.isEmpty) {
+      storeMap['tram_chanh'] = 'TRẠM CHANH';
+      storeMap['tram_sua'] = 'TRẠM SỮA';
+    }
+    return storeMap;
+  }
+
+  // Get staff with automatic deduplication (1 row per employee, combined store tags)
   Future<List<StaffWithStore>> getAllStaffMembers({String? storeIdFilter}) async {
     try {
-      // 1. Fetch all store documents from CCT /stores collection
-      final storesSnapshot = await _firestore.collection('stores').get();
-      final storeMap = <String, String>{}; // storeId -> storeName
-
-      for (final doc in storesSnapshot.docs) {
-        final data = doc.data();
-        storeMap[doc.id] = data['name'] as String? ?? doc.id;
-      }
-
-      // If CCT /stores query was empty or offline, fallback to standard Trạm stores
-      if (storeMap.isEmpty) {
-        storeMap['tram_chanh'] = 'Trạm Chanh';
-        storeMap['tram_sua'] = 'Trạm Sữa';
-      }
-
-      final results = <StaffWithStore>[];
+      final storeMap = await getAvailableStores();
       final targetStoreIds = (storeIdFilter != null && storeIdFilter != 'all')
           ? [storeIdFilter]
           : storeMap.keys.toList();
+
+      // Deduplication map: key = normalized user name or uid -> StaffWithStore
+      final staffMap = <String, StaffWithStore>{};
 
       for (final storeId in targetStoreIds) {
         final storeName = storeMap[storeId] ?? storeId;
@@ -214,50 +244,60 @@ class AuthService {
             final cctRole = data['role'] as String? ?? 'employee';
             if (cctRole == 'owner') continue;
 
-            results.add(StaffWithStore(
-              user: AppUser(
-                uid: doc.id,
-                name: data['name'] as String? ?? '',
-                email: '',
-                phone: data['phone'] as String?,
-                avatarUrl: data['avatarUrl'] as String?,
-                role: KmtRole.staff,
-                currentStoreId: storeId,
-              ),
-              storeId: storeId,
-              storeName: storeName,
-              cctRole: cctRole,
-            ));
+            final uid = doc.id;
+            final name = (data['name'] as String? ?? '').trim();
+            final phone = data['phone'] as String?;
+            final avatarUrl = data['avatarUrl'] as String?;
+
+            // Unique key by UID or normalized Name + Phone
+            final dedupeKey = uid.isNotEmpty ? uid : '${name.toLowerCase()}_${phone ?? ''}';
+
+            if (staffMap.containsKey(dedupeKey)) {
+              // Employee exists in both stores -> Merge store names into 1 record!
+              final existing = staffMap[dedupeKey]!;
+              final updatedStores = List<String>.from(existing.storeNames);
+              if (!updatedStores.contains(storeName)) {
+                updatedStores.add(storeName);
+              }
+              // Keep manager role if higher
+              final updatedRole = (existing.cctRole.contains('manager') || cctRole.contains('manager'))
+                  ? 'manager'
+                  : existing.cctRole;
+
+              staffMap[dedupeKey] = existing.copyWith(
+                storeNames: updatedStores,
+                cctRole: updatedRole,
+              );
+            } else {
+              // New employee record
+              staffMap[dedupeKey] = StaffWithStore(
+                user: AppUser(
+                  uid: uid,
+                  name: name,
+                  email: '',
+                  phone: phone,
+                  avatarUrl: avatarUrl,
+                  role: KmtRole.staff,
+                  currentStoreId: storeId,
+                ),
+                storeId: storeId,
+                storeNames: [storeName],
+                cctRole: cctRole,
+              );
+            }
           }
         } catch (e) {
-          debugPrint('Error getting members for store $storeId: $e');
+          debugPrint('Error fetching members for $storeId: $e');
         }
       }
 
-      // Sort alphabetically by staff name
-      results.sort((a, b) => a.user.name.compareTo(b.user.name));
-      return results;
+      final list = staffMap.values.toList();
+      list.sort((a, b) => a.user.name.compareTo(b.user.name));
+      return list;
     } catch (e) {
-      debugPrint('Error getAllStaffMembers: $e');
+      debugPrint('Error in getAllStaffMembers: $e');
       return [];
     }
-  }
-
-  // Get list of available CCT stores
-  Future<Map<String, String>> getAvailableStores() async {
-    try {
-      final storesSnapshot = await _firestore.collection('stores').get();
-      final storeMap = <String, String>{};
-      for (final doc in storesSnapshot.docs) {
-        final data = doc.data();
-        storeMap[doc.id] = data['name'] as String? ?? doc.id;
-      }
-      if (storeMap.isNotEmpty) return storeMap;
-    } catch (_) {}
-    return {
-      'tram_chanh': 'Trạm Chanh',
-      'tram_sua': 'Trạm Sữa',
-    };
   }
 
   static String parseAuthError(FirebaseAuthException e) {
